@@ -1,7 +1,6 @@
 dependencies:
-  - pandas=1.0.3
-  - bokeh=2.0.1
-  - math
+  - bokeh
+  - pandas
   - pip
   - pip:
     - jupyter-server-proxy
