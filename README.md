@@ -1,3 +1,4 @@
-# gl-surface-temps-nb
+# Great Lakes Surface Temperatures
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/bruxerjk/gl-surface-temps-nb/main)
+This is a Bokeh application to view Great Lakes daily surface temperatures from NOAA's Great Lakes Environmental Research Laboratory.
+
