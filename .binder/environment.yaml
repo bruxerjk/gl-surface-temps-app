@@ -4,5 +4,4 @@ dependencies:
   - math
   - pip
   - pip:
-    - nbserverproxy
     - jupyter-server-proxy
