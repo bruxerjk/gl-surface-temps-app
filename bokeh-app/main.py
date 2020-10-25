@@ -129,7 +129,7 @@ def plot_selected(fig, df, year):
     return fig, selected, label
 
 
-def make_doc():
+def build_layout():
     
     lakes = {'Lake Superior': get_data('s'), 
              'Lake Michigan': get_data('m'), 
@@ -207,15 +207,15 @@ def make_doc():
     plots[3] = lakes['Lake Erie']['plot']['fig']
     plots[4] = lakes['Lake Ontario']['plot']['fig']
     
-    grid = layout([[plots[0]], plots[1], plots[2]],
+    app_layout = layout([[plots[0]], plots[1], plots[2]],
            [plots[3], plots[4], [title, subtitle, slider]])
 
     for lake in [1,2,4]:
         plots[lake].yaxis.axis_label = None
         plots[lake].plot_width = PLOT_WIDTH - 25
         
-    curdoc().add_root(grid)
-    curdoc().title = "Great Lakes Surface Temps"
-
-
-make_doc()
+    return app_layout
+   
+app_layout = build_layout()     
+curdoc().add_root(app_layout)
+curdoc().title = "Great Lakes Surface Temps"
