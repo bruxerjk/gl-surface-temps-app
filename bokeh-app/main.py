@@ -56,13 +56,6 @@ def create_baseplot(lake):
     tick_labels = dict(zip(ticks, labels))
     fig.xaxis.major_label_overrides = tick_labels
     
-    fig.add_tools(HoverTool(
-                tooltips=[
-                        ('Year', '$name'),
-                        ('Day', '$x'),
-                        ('Value', '$y{0.0}')],
-                         toggleable = False
-                         ))
 
     fig.toolbar.logo = None
     
@@ -93,7 +86,8 @@ def plot_all(fig, df):
                               color=palette[i],
                               name=str(yr),
                               **unselected_kwargs))
-    
+        
+
     return fig, lines
 
 
@@ -109,11 +103,22 @@ def plot_selected(fig, df, year):
 
     source = ColumnDataSource(df)
   
+    y=str(year)
     selected = fig.line(x='day',
-                          y=str(year), 
+                          y=y, 
                           source=source,
-                          name='Selected',
+                          name=y,
                           **selected_kwargs)
+
+    hover = fig.add_tools(HoverTool(
+            tooltips=[
+                    ('Year', '$name'),
+                    ('Day', '@day'),
+                    ('Value', '$y{0.0}'+u'\u2103')],
+                     toggleable = False,
+                     names=[y],
+                     mode='vline'
+                     ))
     
     # find location of peak value for labelling
     labelx = df[str(year)].idxmax(axis=0) # index of max temp
@@ -126,7 +131,7 @@ def plot_selected(fig, df, year):
 
     fig.add_layout(label)
     
-    return fig, selected, label
+    return fig, selected, hover, label
 
 
 def build_layout():
@@ -146,7 +151,7 @@ def build_layout():
         start_year = int(lakes[lake]['data'].columns[0])
         end_year = int(lakes[lake]['data'].columns[-1])
         
-        fig, selected, label = plot_selected(fig, lakes[lake]['data'], end_year)
+        fig, selected, hover, label = plot_selected(fig, lakes[lake]['data'], end_year)
         
         lakes[lake]['plot'] = {'fig':fig, 
                                'lines':lines, 
@@ -182,13 +187,21 @@ def build_layout():
                     title='Select Year',
                     width=width-30,
                     orientation='horizontal')
-    
+   
     # add slider with callback
     def callback(atrr, old, new):
         
+               
         for lake in lakes.keys():
-            lakes[lake]['plot']['selected'].glyph.y=str(slider.value)
-    
+            p = lakes[lake]['plot']
+            p['selected'].glyph.name=str(slider.value)
+            p['selected'].glyph.y=str(slider.value)
+            
+            p['fig'].tools[0].tooltips = [('Year', str(slider.value)),
+                                          ('Day', '@day'),
+                                          ('Value', '$y{0.0}'+u'\u2103')]
+            p['fig'].tools[0].names = [str(slider.value)]
+                
             # find location of peak value for labelling
             labelx = lakes[lake]['data'][str(slider.value)].idxmax(axis=0) # index of max temp
             labely = lakes[lake]['data'].loc[:, str(slider.value)].max() # max temp
