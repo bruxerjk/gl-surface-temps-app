@@ -186,6 +186,7 @@ def build_layout():
                     step=1,
                     title='Select Year',
                     width=width-30,
+                    bar_color='firebrick',
                     orientation='horizontal')
    
     # add slider with callback
