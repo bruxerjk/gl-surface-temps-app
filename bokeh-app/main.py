@@ -15,10 +15,10 @@ PLOT_HEIGHT = int(PLOT_WIDTH * 0.7)
 def get_data(lake):
     
     url = f'''https://coastwatch.glerl.noaa.gov/statistic/csv/all_year_glsea_avg_{lake}_C.csv'''
-    data = pd.read_csv(url, index_col=[0])
-    data.index.rename('day', inplace=True)
-    
-    return {'url': url, 'data': data}
+    df = pd.read_csv(url, index_col=[0])
+    df.index.rename('day', inplace=True)
+
+    return {'url': url, 'data': df}
 
 
 def create_baseplot(lake):
@@ -62,15 +62,12 @@ def create_baseplot(lake):
     return fig
 
 
-def plot_all(fig, df):
+def plot_all(fig, df, start_year, end_year):
     
     
     lines = list() # empty list to hold each plotted line
 
     source = ColumnDataSource(df)
-    
-    start_year = int(df.columns[0])
-    end_year = int(df.columns[-1])
     
     # generate palette the size of dataset
     palette = palettes.grey(end_year - start_year + 1)
@@ -91,6 +88,14 @@ def plot_all(fig, df):
     return fig, lines
 
 
+def get_tooltips(year):
+    
+    tooltips = [('Date', '-'.join((year,'@date'))),
+                ('Value', '$y{0.0}'+u'\u2103')]
+    
+    return tooltips
+    
+
 def plot_selected(fig, df, year):
 
     # add highlighted line function
@@ -110,15 +115,13 @@ def plot_selected(fig, df, year):
                           name=y,
                           **selected_kwargs)
 
-    hover = fig.add_tools(HoverTool(
-            tooltips=[
-                    ('Year', '$name'),
-                    ('Day', '@day'),
-                    ('Value', '$y{0.0}'+u'\u2103')],
-                     toggleable = False,
-                     names=[y],
-                     mode='vline'
-                     ))
+    tooltips = get_tooltips(y)
+
+    hover = fig.add_tools(HoverTool(tooltips=tooltips,
+                         toggleable = False,
+                         names=[y],
+                         mode='vline'
+                         ))
     
     # find location of peak value for labelling
     labelx = df[str(year)].idxmax(axis=0) # index of max temp
@@ -146,12 +149,16 @@ def build_layout():
     for lake in lakes.keys():
         
         fig = create_baseplot(lake)
-        fig, lines = plot_all(fig, lakes[lake]['data'])
+        df = lakes[lake]['data']
         
-        start_year = int(lakes[lake]['data'].columns[0])
-        end_year = int(lakes[lake]['data'].columns[-1])
+        start_year = int(df.columns[0])
+        end_year = int(df.columns[-1])
+
+        df['date'] = pd.to_datetime(df.index, format='%j').strftime('%m-%d')
+             
+        fig, lines = plot_all(fig, df, start_year, end_year)
         
-        fig, selected, hover, label = plot_selected(fig, lakes[lake]['data'], end_year)
+        fig, selected, hover, label = plot_selected(fig, df, end_year)
         
         lakes[lake]['plot'] = {'fig':fig, 
                                'lines':lines, 
@@ -161,7 +168,7 @@ def build_layout():
     curdoc().theme = 'light_minimal'
 
     credits_text_1 = '''Data: NOAA Great Lakes Environmental Research Laboratory'''
-    credits_text_2 = '''Graphic: @JacobBruxer'''
+    credits_text_2 = '''Graphic: Jacob Bruxer'''
 
     title = '<br>Great Lakes Surface Water Temperatures (1995-{})'.format(end_year)
 
@@ -197,20 +204,19 @@ def build_layout():
             p = lakes[lake]['plot']
             p['selected'].glyph.name=str(slider.value)
             p['selected'].glyph.y=str(slider.value)
-            
-            p['fig'].tools[0].tooltips = [('Year', str(slider.value)),
-                                          ('Day', '@day'),
-                                          ('Value', '$y{0.0}'+u'\u2103')]
-            p['fig'].tools[0].names = [str(slider.value)]
+            y = str(slider.value)
+            p['fig'].tools[0].tooltips = get_tooltips(y)
+            p['fig'].tools[0].names = [y]
+            #p['fig'].tools[0] = get_hovertool(str(slider.value))
                 
             # find location of peak value for labelling
-            labelx = lakes[lake]['data'][str(slider.value)].idxmax(axis=0) # index of max temp
-            labely = lakes[lake]['data'].loc[:, str(slider.value)].max() # max temp
+            labelx = lakes[lake]['data'][y].idxmax(axis=0) # index of max temp
+            labely = lakes[lake]['data'].loc[:, y].max() # max temp
 
             # add label for selected year, locate at peak
             lakes[lake]['plot']['label'].x=labelx
             lakes[lake]['plot']['label'].y=labely
-            lakes[lake]['plot']['label'].text=str(slider.value)
+            lakes[lake]['plot']['label'].text=y
 
     slider.on_change('value', callback)
 
