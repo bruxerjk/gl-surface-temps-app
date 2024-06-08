@@ -14,7 +14,7 @@ PLOT_HEIGHT = int(PLOT_WIDTH * 0.7)
 
 def get_data(lake):
 
-    url = f'''https://coastwatch.glerl.noaa.gov/statistic/csv/all_year_glsea_avg_{lake}_C.csv'''
+    url = f'''https://apps.glerl.noaa.gov/coastwatch/webdata/statistic/csv/all_year_glsea_avg_{lake}_C.csv'''
     df = pd.read_csv(url, index_col=[0])
     df.index.rename('day', inplace=True)
 
